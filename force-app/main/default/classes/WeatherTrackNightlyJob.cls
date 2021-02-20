@@ -1,5 +1,5 @@
 public class WeatherTrackNightlyJob implements
-    Database.Batchable<sObject>, Database.Stateful {
+    Database.Batchable<sObject>, Database.AllowsCallouts, Database.Stateful {
     public Database.QueryLocator start(Database.BatchableContext bc) {
         return Database.getQueryLocator(
             'SELECT Id, BillingCity FROM Account'
@@ -17,28 +17,22 @@ public class WeatherTrackNightlyJob implements
             ];
             if(relatedTracker.size() == 0){
                 if(acc.BillingCity == null)continue;
-                WeatherTrackNightlyJob.refreshAccountTracker(acc);
+                accsId.add(acc.Id);
             }
             if((relatedTracker.size() != 0) && relatedTracker[0].Created_Date__c == System.today()){
                 continue;
             }else{
-                WeatherTrackNightlyJob.refreshAccountTracker(acc);
+                accsId.add(acc.Id);
             }
 
         }
         if(accsId.size() != 0){
-            for(Account acc : accs){
-                WeatherTrackNightlyJob.refreshAccountTracker(acc);
-            }
+            WeatherTrackController.assignWeatherTrackersToAccountsSync(accsId);
         }
     }
 
     public void finish(Database.BatchableContext bc){
         System.debug('All weather trackers updated');
         
-    }
-
-    public static void refreshAccountTracker(Account acc){
-        update acc;
     }
 }
